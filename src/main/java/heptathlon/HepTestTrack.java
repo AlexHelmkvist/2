@@ -20,7 +20,7 @@ public class HepTestTrack {
         try {
             // Score = INT(A(B-P)C)
             // P = distance A = 9.23076  B = 26.7  C = 1.835
-            // Example distance 16.5: INT(9.23076(26.7-16.5)^1.835) = 1
+            // Example distance 16.5: INT(9.23076(26.7-16.5)^1.835) = 654
 
             int expected = 654;
 
