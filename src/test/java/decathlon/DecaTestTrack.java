@@ -24,7 +24,7 @@ public class DecaTestTrack {
             int expected = 2640;
 
             //Set a value 10 - 30
-            //Call calculateResult to get the score 1
+            //Call calculateResult to get the score
             int actual = deca100M.calculateResult(5);
 
             // Checks that expected and actual are equal
