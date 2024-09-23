@@ -19,12 +19,13 @@ public class MainGUI {
     private JTextField resultField;
     private JComboBox<String> disciplineBox;
     private JTextArea outputArea;
+    private JButton calculateButton;
 
     public static void main(String[] args) {
         new MainGUI().createAndShowGUI();
     }
 
-    private void createAndShowGUI() {
+    void createAndShowGUI() {
         JFrame frame = new JFrame("Track and Field Calculator");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(500, 400);
@@ -57,8 +58,8 @@ public class MainGUI {
         panel.add(new JLabel("Enter Result:"));
         panel.add(resultField);
 
-        // Button to calculate and display result
-        JButton calculateButton = new JButton("Calculate Score");
+        // New Button to calculate and display result
+        calculateButton = new JButton("Calculate Score");
         calculateButton.addActionListener(new CalculateButtonListener());
         panel.add(calculateButton);
 
@@ -70,6 +71,26 @@ public class MainGUI {
 
         frame.add(panel);
         frame.setVisible(true);
+    }
+
+    public JTextField getNameField() {
+        return nameField;
+    }
+
+    public JComboBox<String> getDisciplineBox() {
+        return disciplineBox;
+    }
+
+    public JTextField getResultField() {
+        return resultField;
+    }
+
+    public JButton getCalculateButton() {
+        return calculateButton;
+    }
+
+    public JTextArea getOutputArea() {
+        return outputArea;
     }
 
     private class CalculateButtonListener implements ActionListener {
