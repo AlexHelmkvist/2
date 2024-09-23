@@ -1,5 +1,8 @@
-package heptathlon;
+package decathlon;
 
+import heptathlon.Hep100MHurdles;
+import heptathlon.Hep200M;
+import heptathlon.Hep800M;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;

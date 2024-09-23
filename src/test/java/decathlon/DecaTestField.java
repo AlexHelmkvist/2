@@ -148,10 +148,10 @@ public class DecaTestField {
     public void testScoreDecaLongJump() {
         try {
             // Score = INT(A(P — B)C)
-            // P = distance A = 0.13454 B = 220 C = 1.4
-            // Example distance 500 : INT(0.13454(500 - 220)^1.4) = 358
+            // P = distance A = 0.14354 B = 220 C = 1.4
+            // Example distance 500 : INT(0.13454(500 - 220)^1.4) = 382
 
-            int expected = 358;
+            int expected = 382;
             //Acceptable values for DecaLongJump are from 0 to 1000
             int actual = decaLongJump.calculateResult(500);
 
