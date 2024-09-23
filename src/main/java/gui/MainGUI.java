@@ -145,7 +145,6 @@ public class MainGUI {
                         DecaShotPut decaShotPut = new DecaShotPut();
                         score = decaShotPut.calculateResult(result);
                         break;
-                    //Complete heptathlon case "Hep100MHurdles"
                     case "Hept 100M Hurdles":
                         Hep100MHurdles hep100MHurdles = new Hep100MHurdles();
                         score = hep100MHurdles.calculateResult(result);
@@ -170,7 +169,7 @@ public class MainGUI {
                         HeptLongJump heptLongJump = new HeptLongJump();
                         score = heptLongJump.calculateResult(result);
                         break;
-                    case "HeptShotPut":
+                    case "Hept Shot Put":
                         HeptShotPut heptShotPut = new HeptShotPut();
                         score = heptShotPut.calculateResult(result);
                         break;
