@@ -7,7 +7,7 @@ public class Deca1500M {
 	private int score;
 	private double A = 0.03768;
 	private double B = 480;
-	private double C = 18.5;
+	private double C = 1.85;
 	boolean active = true;
 
 	CalcTrackAndField calc = new CalcTrackAndField();
@@ -20,10 +20,10 @@ public class Deca1500M {
 
 			try {
 				// Acceptable values.
-				if (runningTime < 2) {
+				if (runningTime < 150) {
 					System.out.println("Value too low");
 					runningTime = inputResult.enterResult();
-				} else if (runningTime > 7) {
+				} else if (runningTime > 400) {
 					System.out.println("Value too high");
 					runningTime = inputResult.enterResult();
 				} else {

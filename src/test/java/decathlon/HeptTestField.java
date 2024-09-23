@@ -1,5 +1,9 @@
-package heptathlon;
+package decathlon;
 
+import heptathlon.HeptHightJump;
+import heptathlon.HeptJavelinThrow;
+import heptathlon.HeptLongJump;
+import heptathlon.HeptShotPut;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
@@ -192,7 +196,7 @@ public class HeptTestField {
             System.setOut(new PrintStream(outputStream));
 
             // Do not change the value!
-            // Simulate a valid user input (example distance 16.5) in the end, to break the loop
+            // Simulate a valid user input (example dis16tance 16.5) in the end, to break the loop
             System.setIn(new ByteArrayInputStream("16.5".getBytes()));
 
             // Set any value for distance that you want to test
