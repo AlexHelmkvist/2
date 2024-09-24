@@ -44,7 +44,7 @@ public class MainGUI {
                 "Deca Long Jump", "Deca High Jump", "Deca Pole Vault",
                 "Deca Discus Throw", "Deca Javelin Throw", "Deca Shot Put",
                 //Hept
-                "Hept 100M Hurdles", "Hept 200M", "Hept 800M", "Hept 400M",
+                "Hept 100M Hurdles", "Hept 200M", "Hept 800M",
                 "Hept High Jump", "Hept Javelin Throw", "Hept Long Jump", "Hept Shot Put"
 
 
@@ -174,7 +174,7 @@ public class MainGUI {
                         score = heptShotPut.calculateResult(result);
                         break;
                 }
-
+                
                 outputArea.append("Competitor: " + name + "\n");
                 outputArea.append("Discipline: " + discipline + "\n");
                 outputArea.append("Result: " + result + "\n");
