@@ -20,6 +20,10 @@ public class MainGUI {
     private JComboBox<String> disciplineBox;
     private JTextArea outputArea;
     private JButton calculateButton;
+    //Array to store competitor information
+    private String[] competitors = new String[40];
+    //Count of competitors
+    private int competitorCount = 0;
 
     public static void main(String[] args) {
         new MainGUI().createAndShowGUI();
@@ -73,6 +77,7 @@ public class MainGUI {
         frame.setVisible(true);
     }
 
+    //Getters to get interaction outside the class
     public JTextField getNameField() {
         return nameField;
     }
@@ -93,6 +98,14 @@ public class MainGUI {
         return outputArea;
     }
 
+    public String[] getCompetitors() {
+    	return competitors;
+    }
+
+    public int getCompetitorCount() {
+    	return competitorCount;
+    }
+
     private class CalculateButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -102,6 +115,16 @@ public class MainGUI {
 
             try {
                 double result = Double.parseDouble(resultText);
+
+                // Check if the maximum number of competitors has been reached
+                if (competitorCount < competitors.length) {
+                    competitors[competitorCount] = name + result;
+                    competitorCount++;
+                } else {
+                    JOptionPane.showMessageDialog(null, "Maximum number of competitors reached.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return; // Exit the method if the maximum number of competitors is reached
+                }
+
 
                 int score = 0;
                 switch (discipline) {
