@@ -77,35 +77,6 @@ public class MainGUI {
         frame.setVisible(true);
     }
 
-    //Getters to get interaction outside the class
-    public JTextField getNameField() {
-        return nameField;
-    }
-
-    public JComboBox<String> getDisciplineBox() {
-        return disciplineBox;
-    }
-
-    public JTextField getResultField() {
-        return resultField;
-    }
-
-    public JButton getCalculateButton() {
-        return calculateButton;
-    }
-
-    public JTextArea getOutputArea() {
-        return outputArea;
-    }
-
-    public String[] getCompetitors() {
-    	return competitors;
-    }
-
-    public int getCompetitorCount() {
-    	return competitorCount;
-    }
-
     private class CalculateButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -206,5 +177,33 @@ public class MainGUI {
                 JOptionPane.showMessageDialog(null, "Please enter a valid number for the result.", "Invalid Input", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+    //Getters to get interaction outside the class
+    public JTextField getNameField() {
+        return nameField;
+    }
+
+    public JComboBox<String> getDisciplineBox() {
+        return disciplineBox;
+    }
+
+    public JTextField getResultField() {
+        return resultField;
+    }
+
+    public JButton getCalculateButton() {
+        return calculateButton;
+    }
+
+    public JTextArea getOutputArea() {
+        return outputArea;
+    }
+
+    public String[] getCompetitors() {
+        return competitors;
+    }
+
+    public int getCompetitorCount() {
+        return competitorCount;
     }
 }
