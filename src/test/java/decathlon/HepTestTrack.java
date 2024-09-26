@@ -27,7 +27,7 @@ public class HepTestTrack {
 
             int expected = 654;
 
-            //Set a value 5 - 26.4
+            //Set a value 10 - 30
             //Call calculateResult to get the score
             int actual = hep100MHurdles.calculateResult(16.5);
 
@@ -59,7 +59,7 @@ public class HepTestTrack {
 
             // If the output contains "Value too low" or "Value too high", the test will fail
             if ((output.contains("Value too low") || output.contains("Value too high"))) {
-                fail("Set a value for distance that is within 5 to 26.4");
+                fail("Set a value for distance that is within 10 to 30");
             }
 
             // Catch any unexpected errors
