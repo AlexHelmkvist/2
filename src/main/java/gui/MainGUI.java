@@ -8,9 +8,11 @@ import java.awt.event.ActionListener;
 
 
 import java.awt.*;
+import java.io.IOException;
 
 import decathlon.*;
 import heptathlon.*;
+import excel.*;
 
 
 public class MainGUI {
@@ -24,6 +26,10 @@ public class MainGUI {
     private String[] competitors = new String[40];
     //Count of competitors
     private int competitorCount = 0;
+    // Button to print Excel file
+    private JButton excelPrintButton;
+    // Instance variable for ExcelPrinter
+    private ExcelPrinter excelPrinter;
 
     public static void main(String[] args) {
         new MainGUI().createAndShowGUI();
@@ -73,6 +79,18 @@ public class MainGUI {
         JScrollPane scrollPane = new JScrollPane(outputArea);
         panel.add(scrollPane);
 
+        // Button to print result to excel file
+        excelPrintButton = new JButton("Print to Excel");
+        excelPrintButton.addActionListener(new ExcelPrintButtonListener());
+        panel.add(excelPrintButton);
+
+        // Attempts to create Excel file named "final results" and display error if it fails
+        try {
+            excelPrinter = new ExcelPrinter("final results");
+        } catch (IOException ex) {
+            outputArea.append("Error: " + ex.getMessage() + "\n");
+        }
+
         frame.add(panel);
         frame.setVisible(true);
     }
@@ -86,16 +104,6 @@ public class MainGUI {
 
             try {
                 double result = Double.parseDouble(resultText);
-
-                // Check if the maximum number of competitors has been reached
-                if (competitorCount < competitors.length) {
-                    competitors[competitorCount] = name + result;
-                    competitorCount++;
-                } else {
-                    JOptionPane.showMessageDialog(null, "Maximum number of competitors reached.", "Error", JOptionPane.ERROR_MESSAGE);
-                    return; // Exit the method if the maximum number of competitors is reached
-                }
-
 
                 int score = 0;
                 switch (discipline) {
@@ -168,6 +176,16 @@ public class MainGUI {
                         score = heptShotPut.calculateResult(result);
                         break;
                 }
+
+
+                // Save the competitor's information to the array
+                if (competitorCount < competitors.length) {
+                    competitors[competitorCount] = name + "-" + discipline + "-" + result + "-" + score;
+                    competitorCount++;
+                } else {
+                    JOptionPane.showMessageDialog(null, "Maximum number of competitors reached.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return; // Exit the method if the maximum number of competitors is reached
+                }
                 
                 outputArea.append("Competitor: " + name + "\n");
                 outputArea.append("Discipline: " + discipline + "\n");
@@ -178,6 +196,37 @@ public class MainGUI {
             }
         }
     }
+
+    // ActionListener for the "Print to Excel" button
+    private class ExcelPrintButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try {
+                // Attempt to save the data to Excel
+                Object[][] data = convertCompetitorsToData();
+                excelPrinter.add(data, "Results");
+                excelPrinter.write();
+                outputArea.append("Results saved to Excel!\n");
+            } catch (IOException ex) {
+                outputArea.append("Error saving to Excel: " + ex.getMessage() + "\n");
+            }
+        }
+
+        //Prepares the data for the Excel sheet
+        private Object[][] convertCompetitorsToData() {
+            Object[][] data = new Object[competitorCount][4];
+            for (int i = 0; i < competitorCount; i++) {
+                String[] parts = competitors[i].split("-");
+                data[i][0] = parts[0]; // Name
+                data[i][1] = parts[1]; // Discipline
+                data[i][2] = parts[2]; // Result
+                data[i][3] = parts[3]; // Score
+            }
+            // Return the converted data
+            return data;
+        }
+    }
+
     //Getters to get interaction outside the class
     public JTextField getNameField() {
         return nameField;
