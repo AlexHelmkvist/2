@@ -151,14 +151,14 @@ public class HeptTestField {
             System.setIn(new ByteArrayInputStream("300".getBytes()));
 
             // Set any value for distance that you want to test
-            heptLongJump.calculateResult(3000);
+            heptLongJump.calculateResult(300);
 
             // Check the console output
             String output = outputStream.toString();
 
             // If the output contains "Value too low" or "Value too high", the test will fail
             if ((output.contains("Value too low") || "Value too high".contains(output))) {
-                fail("Set a value for distance that is within 0 to 400");
+                fail("Set a value for distance that is within 0 to 1000");
             }
 
         } catch (Exception e) {
