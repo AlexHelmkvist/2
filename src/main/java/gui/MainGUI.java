@@ -86,7 +86,7 @@ public class MainGUI {
 
         // Attempts to create Excel file named "final results" and display error if it fails
         try {
-            excelPrinter = new ExcelPrinter("final results");
+            excelPrinter = new ExcelPrinter("final result");
         } catch (IOException ex) {
             outputArea.append("Error: " + ex.getMessage() + "\n");
         }
