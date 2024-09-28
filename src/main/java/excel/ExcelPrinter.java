@@ -49,9 +49,20 @@ public class ExcelPrinter {
 	}
 
 	public void write() throws IOException {
-		FileOutputStream out = new FileOutputStream("C:/Eclipse/resultat_" + excelName + ".xlsx");
-		workbook.write(out);
-		workbook.close();
-	}
+		String filePath; // Deklarera filvägen
+		String os = System.getProperty("os.name").toLowerCase(); // Hämtar operativsystemets namn och gör det till små bokstäver
 
-}
+		// Kontrollera vilket operativsystem som används
+		if (os.contains("win")) {
+			filePath = "C:/Eclipse/resultat_" + excelName + ".xlsx"; // För Windows
+		} else if (os.contains("mac")) { // För Mac
+			filePath = System.getProperty("user.home") + "/Desktop/resultat_" + excelName + ".xlsx";
+		} else {
+			throw new IOException("Unsupported operating system."); // Felhantering för andra operativsystem
+		}
+
+
+		FileOutputStream out = new FileOutputStream(filePath);
+		workbook.write(out);
+		out.close();
+	}}
