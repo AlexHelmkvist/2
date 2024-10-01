@@ -2,6 +2,8 @@ package excel;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -13,6 +15,7 @@ public class ExcelPrinter {
 
 	private XSSFWorkbook workbook;
 	private String excelName;
+	private String filePath;
 
 	public ExcelPrinter(String name) throws IOException {
 		workbook = new XSSFWorkbook();
@@ -49,14 +52,18 @@ public class ExcelPrinter {
 	}
 
 	public void write() throws IOException {
-		String filePath; // Deklarera filvägen
+		//String filePath; Deklarera filvägen
 		String os = System.getProperty("os.name").toLowerCase(); // Hämtar operativsystemets namn och gör det till små bokstäver
+
+		//Gets the current date and time on the local machine
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("hh-mm-ss");
+		String time = LocalDateTime.now().format(formatter);
 
 		// Kontrollera vilket operativsystem som används
 		if (os.contains("win")) {
-			filePath = "C:/Eclipse/resultat_" + excelName + ".xlsx"; // För Windows
+			filePath = "C:/Eclipse/resultat_" + excelName + time + ".xlsx"; // För Windows
 		} else if (os.contains("mac")) { // För Mac
-			filePath = System.getProperty("user.home") + "/Desktop/resultat_" + excelName + ".xlsx";
+			filePath = System.getProperty("user.home") + "/Desktop/resultat_" + excelName + time + ".xlsx";
 		} else {
 			throw new IOException("Unsupported operating system."); // Felhantering för andra operativsystem
 		}
@@ -65,4 +72,10 @@ public class ExcelPrinter {
 		FileOutputStream out = new FileOutputStream(filePath);
 		workbook.write(out);
 		out.close();
-	}}
+	}
+
+	//Getters
+	public String getFilePath() {
+		return filePath;
+	}
+}
