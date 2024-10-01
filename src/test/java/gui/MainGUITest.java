@@ -16,14 +16,26 @@ public class MainGUITest {
     @Test
     public void testAddCompetitor() {
         // Test adding a new competitor
-        mainGUI.getNameField().setText("John");
-        mainGUI.getDisciplineBox().setSelectedItem("Deca 100m");
-        mainGUI.getResultField().setText("11");
+        String name = "John";
+        String descipline = "Deca 100m";
+        double result = 11.0;
+
+        mainGUI.getNameField().setText(name);
+        mainGUI.getDisciplineBox().setSelectedItem(descipline);
+        mainGUI.getResultField().setText(String.valueOf(result));
+        mainGUI.getCalculateButton().doClick();
+        mainGUI.getNameField().setText("Adam");
         mainGUI.getCalculateButton().doClick();
 
-        // Verify that the new competitor was added
-        assertEquals("John" + 11.0, mainGUI.getCompetitors()[0]);
-        assertEquals(1, mainGUI.getCompetitorCount());
+        // Getting competitor data from the array
+        String competitorData = mainGUI.getCompetitors()[0];
+
+        // Split up the String into each part
+        String[] parts = competitorData.split("-");
+
+        // Verify that the name is actually added
+        assertEquals(2, mainGUI.getCompetitorCount());
+        assertEquals(name, parts[0].trim());
     }
 
     @Test
