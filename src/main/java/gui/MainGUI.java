@@ -7,9 +7,11 @@ import java.awt.event.ActionListener;
 
 
 import java.awt.*;
+import java.io.IOException;
 
 import decathlon.*;
 import heptathlon.*;
+import excel.*;
 
 
 public class MainGUI {
@@ -19,6 +21,14 @@ public class MainGUI {
     private JComboBox<String> disciplineBox;
     private JTextArea outputArea;
     private JButton calculateButton;
+    //Array to store competitor information
+    private String[] competitors = new String[40];
+    //Count of competitors
+    private int competitorCount = 0;
+    // Button to print Excel file
+    private JButton excelPrintButton;
+    // Instance variable for ExcelPrinter
+    private ExcelPrinter excelPrinter;
 
     public static void main(String[] args) {
         new MainGUI().createAndShowGUI();
@@ -43,7 +53,7 @@ public class MainGUI {
                 "Deca Long Jump", "Deca High Jump", "Deca Pole Vault",
                 "Deca Discus Throw", "Deca Javelin Throw", "Deca Shot Put",
                 //Hept
-                "Hept 100M Hurdles", "Hept 200M", "Hept 800M", "Hept 400M",
+                "Hept 100M Hurdles", "Hept 200M", "Hept 800M",
                 "Hept High Jump", "Hept Javelin Throw", "Hept Long Jump", "Hept Shot Put"
 
 
@@ -68,28 +78,20 @@ public class MainGUI {
         JScrollPane scrollPane = new JScrollPane(outputArea);
         panel.add(scrollPane);
 
+        // Button to print result to excel file
+        excelPrintButton = new JButton("Print to Excel");
+        excelPrintButton.addActionListener(new ExcelPrintButtonListener());
+        panel.add(excelPrintButton);
+
+        // Attempts to create Excel file named "final results" and display error if it fails
+        try {
+            excelPrinter = new ExcelPrinter("final result");
+        } catch (IOException ex) {
+            outputArea.append("Error: " + ex.getMessage() + "\n");
+        }
+
         frame.add(panel);
         frame.setVisible(true);
-    }
-
-    public JTextField getNameField() {
-        return nameField;
-    }
-
-    public JComboBox<String> getDisciplineBox() {
-        return disciplineBox;
-    }
-
-    public JTextField getResultField() {
-        return resultField;
-    }
-
-    public JButton getCalculateButton() {
-        return calculateButton;
-    }
-
-    public JTextArea getOutputArea() {
-        return outputArea;
     }
 
     private class CalculateButtonListener implements ActionListener {
@@ -144,7 +146,6 @@ public class MainGUI {
                         DecaShotPut decaShotPut = new DecaShotPut();
                         score = decaShotPut.calculateResult(result);
                         break;
-                    //Complete heptathlon case "Hep100MHurdles"
                     case "Hept 100M Hurdles":
                         Hep100MHurdles hep100MHurdles = new Hep100MHurdles();
                         score = hep100MHurdles.calculateResult(result);
@@ -169,12 +170,22 @@ public class MainGUI {
                         HeptLongJump heptLongJump = new HeptLongJump();
                         score = heptLongJump.calculateResult(result);
                         break;
-                    case "HeptShotPut":
+                    case "Hept Shot Put":
                         HeptShotPut heptShotPut = new HeptShotPut();
                         score = heptShotPut.calculateResult(result);
                         break;
                 }
 
+
+                // Save the competitor's information to the array
+                if (competitorCount < competitors.length) {
+                    competitors[competitorCount] = name + "-" + discipline + "-" + result + "-" + score;
+                    competitorCount++;
+                } else {
+                    JOptionPane.showMessageDialog(null, "Maximum number of competitors reached.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return; // Exit the method if the maximum number of competitors is reached
+                }
+                
                 outputArea.append("Competitor: " + name + "\n");
                 outputArea.append("Discipline: " + discipline + "\n");
                 outputArea.append("Result: " + result + "\n");
@@ -185,5 +196,64 @@ public class MainGUI {
                 JOptionPane.showMessageDialog(null, ex.getMessage(), "Invalid Result", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+    // ActionListener for the "Print to Excel" button
+    private class ExcelPrintButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try {
+                // Attempt to save the data to Excel
+                Object[][] data = convertCompetitorsToData();
+                excelPrinter.add(data, "Results");
+                excelPrinter.write();
+                outputArea.append("Results saved to Excel!\n");
+            } catch (IOException ex) {
+                outputArea.append("Error saving to Excel: " + ex.getMessage() + "\n");
+            }
+        }
+
+        //Prepares the data for the Excel sheet
+        private Object[][] convertCompetitorsToData() {
+            Object[][] data = new Object[competitorCount][4];
+            for (int i = 0; i < competitorCount; i++) {
+                String[] parts = competitors[i].split("-");
+                data[i][0] = parts[0]; // Name
+                data[i][1] = parts[1]; // Discipline
+                data[i][2] = parts[2]; // Result
+                data[i][3] = parts[3]; // Score
+            }
+            // Return the converted data
+            return data;
+        }
+    }
+
+    //Getters to get interaction outside the class
+    public JTextField getNameField() {
+        return nameField;
+    }
+
+    public JComboBox<String> getDisciplineBox() {
+        return disciplineBox;
+    }
+
+    public JTextField getResultField() {
+        return resultField;
+    }
+
+    public JButton getCalculateButton() {
+        return calculateButton;
+    }
+
+    public JTextArea getOutputArea() {
+        return outputArea;
+    }
+
+    public String[] getCompetitors() {
+        return competitors;
+    }
+
+    public int getCompetitorCount() {
+        return competitorCount;
     }
 }
