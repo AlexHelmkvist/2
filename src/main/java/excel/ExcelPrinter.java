@@ -60,21 +60,18 @@ public class ExcelPrinter {
 		String time = LocalDateTime.now().format(formatter);
 
 		// Kontrollera vilket operativsystem som används
-		if (os.contains("win")) {
-			filePath = "C:/Eclipse/resultat_" + excelName + time + ".xlsx"; // För Windows
-		} else if (os.contains("mac")) { // För Mac
+		if (os.contains("mac")) {
 			filePath = System.getProperty("user.home") + "/Desktop/resultat_" + excelName + time + ".xlsx";
 		} else {
-			throw new IOException("Unsupported operating system."); // Felhantering för andra operativsystem
+			filePath = "C:/Eclipse/resultat_" + excelName + time + ".xlsx"; // För Windows
 		}
-
 
 		FileOutputStream out = new FileOutputStream(filePath);
 		workbook.write(out);
 		out.close();
 	}
 
-	//Getters
+	//Get method
 	public String getFilePath() {
 		return filePath;
 	}
