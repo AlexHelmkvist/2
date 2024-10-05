@@ -27,8 +27,12 @@ public class MainGUI {
     private int competitorCount = 0;
     // Button to print Excel file
     private JButton excelPrintButton;
+    // Button to read Excel file
+    private JButton excelReadButton;
     // Instance variable for ExcelPrinter
     private ExcelPrinter excelPrinter;
+    // Instance variable for ExcelReader
+    private ExcelReader excelReader;
 
     public static void main(String[] args) {
         new MainGUI().createAndShowGUI();
@@ -78,6 +82,11 @@ public class MainGUI {
         JScrollPane scrollPane = new JScrollPane(outputArea);
         panel.add(scrollPane);
 
+        // Button to read Excel file
+        excelReadButton = new JButton("Read Excel File");
+        excelReadButton.addActionListener(new ReadExcelButtonListener());
+        panel.add(excelReadButton);
+
         // Button to print result to excel file
         excelPrintButton = new JButton("Print to Excel");
         excelPrintButton.addActionListener(new ExcelPrintButtonListener());
@@ -90,6 +99,7 @@ public class MainGUI {
             outputArea.append("Error: " + ex.getMessage() + "\n");
         }
 
+        excelReader = new ExcelReader();
         frame.add(panel);
         frame.setVisible(true);
     }
@@ -185,7 +195,7 @@ public class MainGUI {
                     JOptionPane.showMessageDialog(null, "Maximum number of competitors reached.", "Error", JOptionPane.ERROR_MESSAGE);
                     return; // Exit the method if the maximum number of competitors is reached
                 }
-                
+
                 outputArea.append("Competitor: " + name + "\n");
                 outputArea.append("Discipline: " + discipline + "\n");
                 outputArea.append("Result: " + result + "\n");
@@ -198,62 +208,78 @@ public class MainGUI {
         }
     }
 
-    // ActionListener for the "Print to Excel" button
-    private class ExcelPrintButtonListener implements ActionListener {
+    // ActionListener for the "Read Excel File" button
+    private class ReadExcelButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             try {
-                // Attempt to save the data to Excel
-                Object[][] data = convertCompetitorsToData();
-                excelPrinter.add(data, "Results");
-                excelPrinter.write();
-                outputArea.append("Results saved to Excel!\n");
+                // attempt to read the data from the Excel file
+                excelReader = new ExcelReader();
+                String excelData = excelReader.getCellInfo( 0, 0, 0,1,2,3);
+                outputArea.append("Excel Data: " + excelData + "\n");
             } catch (IOException ex) {
-                outputArea.append("Error saving to Excel: " + ex.getMessage() + "\n");
+                outputArea.append("Error reading Excel file: " + ex.getMessage() + "\n");
             }
         }
+    }
+            // ActionListener for the "Print to Excel" button
+            private class ExcelPrintButtonListener implements ActionListener {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        // Attempt to save the data to Excel
+                        Object[][] data = convertCompetitorsToData();
+                        excelPrinter.add(data, "Results");
+                        excelPrinter.write();
+                        outputArea.append("Results saved to Excel!\n");
+                    } catch (IOException ex) {
+                        outputArea.append("Error saving to Excel: " + ex.getMessage() + "\n");
+                    }
+                }
 
-        //Prepares the data for the Excel sheet
-        private Object[][] convertCompetitorsToData() {
-            Object[][] data = new Object[competitorCount][4];
-            for (int i = 0; i < competitorCount; i++) {
-                String[] parts = competitors[i].split("-");
-                data[i][0] = parts[0]; // Name
-                data[i][1] = parts[1]; // Discipline
-                data[i][2] = parts[2]; // Result
-                data[i][3] = parts[3]; // Score
+                //Prepares the data for the Excel sheet
+                private Object[][] convertCompetitorsToData() {
+                    Object[][] data = new Object[competitorCount][4];
+                    for (int i = 0; i < competitorCount; i++) {
+                        String[] parts = competitors[i].split("-");
+                        data[i][0] = parts[0]; // Name
+                        data[i][1] = parts[1]; // Discipline
+                        data[i][2] = parts[2]; // Result
+                        data[i][3] = parts[3]; // Score
+                    }
+                    // Return the converted data
+                    return data;
+                }
             }
-            // Return the converted data
-            return data;
+
+
+        //Getters to get interaction outside the class
+        public JTextField getNameField() {
+            return nameField;
+        }
+
+        public JComboBox<String> getDisciplineBox() {
+            return disciplineBox;
+        }
+
+        public JTextField getResultField() {
+            return resultField;
+        }
+
+        public JButton getCalculateButton() {
+            return calculateButton;
+        }
+
+        public JTextArea getOutputArea() {
+            return outputArea;
+        }
+
+        public String[] getCompetitors() {
+            return competitors;
+        }
+
+        public int getCompetitorCount() {
+            return competitorCount;
         }
     }
 
-    //Getters to get interaction outside the class
-    public JTextField getNameField() {
-        return nameField;
-    }
-
-    public JComboBox<String> getDisciplineBox() {
-        return disciplineBox;
-    }
-
-    public JTextField getResultField() {
-        return resultField;
-    }
-
-    public JButton getCalculateButton() {
-        return calculateButton;
-    }
-
-    public JTextArea getOutputArea() {
-        return outputArea;
-    }
-
-    public String[] getCompetitors() {
-        return competitors;
-    }
-
-    public int getCompetitorCount() {
-        return competitorCount;
-    }
-}
