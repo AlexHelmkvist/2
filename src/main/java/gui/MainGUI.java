@@ -20,17 +20,11 @@ public class MainGUI {
     private JTextField resultField;
     private JComboBox<String> disciplineBox;
     private JTextArea outputArea;
-    private JButton calculateButton;
+    private JButton calculateButton, excelPrintButton, excelReadButton, saveDataButton;
     //Array to store competitor information
     private String[] competitors = new String[40];
     //Count of competitors
     private int competitorCount = 0;
-    // Button to print Excel file
-    private JButton excelPrintButton;
-    // Button to read Excel file
-    private JButton excelReadButton;
-    // Button to save current data
-    private JButton saveDataButton;
     // Instance variable for ExcelPrinter
     private ExcelPrinter excelPrinter;
     // Instance variable for ExcelReader
