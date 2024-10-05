@@ -20,7 +20,7 @@ public class MainGUI {
     private JTextField resultField;
     private JComboBox<String> disciplineBox;
     private JTextArea outputArea;
-    private JButton calculateButton, excelPrintButton, excelReadButton, saveDataButton;
+    private JButton calculateButton, excelPrintButton, excelReadButton, saveDataButton, clearDataButton;
     //Array to store competitor information
     private String[] competitors = new String[40];
     //Count of competitors
@@ -92,6 +92,11 @@ public class MainGUI {
         saveDataButton = new JButton("Save Data");
         saveDataButton.addActionListener(new SaveDataButtonListener());
         panel.add(saveDataButton);
+
+        //Button to clear data
+        clearDataButton = new JButton("Clear Data");
+        clearDataButton.addActionListener(new ClearDataButtonListener());
+        panel.add(clearDataButton);
 
         // Attempts to create Excel file named "final results" and display error if it fails
         try {
@@ -224,7 +229,7 @@ public class MainGUI {
 
                 // Save the competitor's information to the array
                 if (competitorCount < competitors.length) {
-                    competitors[competitorCount] = name + "-" + discipline + "-" + result + "-" + score;
+                    competitors[competitorCount] = " - " + "Competitor: " + name + "\n" + " - " + "Discipline: " + discipline + "\n" + " - " + "Result: " + result + "\n" + " - " + "Score: " + score + "\n";
                     competitorCount++;
                 } else {
                     JOptionPane.showMessageDialog(null, "Maximum number of competitors reached.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -251,6 +256,15 @@ public class MainGUI {
         }
     }
 
+    //ActionListener for the "Clear Data" button
+    private class ClearDataButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            competitorCount = 0;
+            outputArea.setText("");
+        }
+    }
+
     // ActionListener for the "Read Excel File" button
     private class ReadExcelButtonListener implements ActionListener {
         @Override
@@ -259,7 +273,7 @@ public class MainGUI {
                 // attempt to read the data from the Excel file
                 excelReader = new ExcelReader();
                 String excelData = excelReader.getCellInfo( 0, 0, 0,1,2,3);
-                outputArea.append("Excel Data: " + excelData + "\n");
+                outputArea.append(excelData);
             } catch (IOException ex) {
                 outputArea.append("Error reading Excel file: " + ex.getMessage() + "\n");
             }
