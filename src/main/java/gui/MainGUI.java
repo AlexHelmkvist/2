@@ -7,7 +7,7 @@ import java.awt.event.ActionListener;
 
 
 import java.awt.*;
-import java.io.IOException;
+import java.io.*;
 
 import decathlon.*;
 import heptathlon.*;
@@ -29,6 +29,8 @@ public class MainGUI {
     private JButton excelPrintButton;
     // Button to read Excel file
     private JButton excelReadButton;
+    // Button to save current data
+    private JButton saveDataButton;
     // Instance variable for ExcelPrinter
     private ExcelPrinter excelPrinter;
     // Instance variable for ExcelReader
@@ -92,6 +94,11 @@ public class MainGUI {
         excelPrintButton.addActionListener(new ExcelPrintButtonListener());
         panel.add(excelPrintButton);
 
+        //Button to save data
+        saveDataButton = new JButton("Save Data");
+        saveDataButton.addActionListener(new SaveDataButtonListener());
+        panel.add(saveDataButton);
+
         // Attempts to create Excel file named "final results" and display error if it fails
         try {
             excelPrinter = new ExcelPrinter("");
@@ -102,6 +109,40 @@ public class MainGUI {
         excelReader = new ExcelReader();
         frame.add(panel);
         frame.setVisible(true);
+
+        // Load saved data when the program starts
+        loadData();
+
+        // Save data when the program is stopped
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> saveData()));
+
+    }
+
+
+    // Save competitors' data to a file when the program stops
+    private void saveData() {
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("programdata.dat"))) {
+            out.writeObject(competitors);
+            out.writeInt(competitorCount);  // Save the number of competitors
+            outputArea.append("Data saved successfully! \n");
+        } catch (IOException e) {
+            outputArea.append("Error saving data: " + e.getMessage());
+        }
+    }
+
+    // Load competitors' data from a file when the program starts
+    private void loadData() {
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream("programdata.dat"))) {
+            competitors = (String[]) in.readObject();
+            competitorCount = in.readInt();
+            outputArea.append("Data loaded successfully! \n");
+            // Optionally, you can append loaded data to outputArea here
+            for (int i = 0; i < competitorCount; i++) {
+                outputArea.append(competitors[i] + "\n");
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            outputArea.append("No saved data found. \n");
+        }
     }
 
     private class CalculateButtonListener implements ActionListener {
@@ -205,6 +246,14 @@ public class MainGUI {
             } catch (InvalidResultException ex) {
                 JOptionPane.showMessageDialog(null, ex.getMessage(), "Invalid Result", JOptionPane.ERROR_MESSAGE);
             }
+        }
+    }
+
+    // ActionListener for the "Save Data" button
+    private class SaveDataButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            saveData();
         }
     }
 
