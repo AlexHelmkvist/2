@@ -229,7 +229,7 @@ public class MainGUI {
 
                 // Save the competitor's information to the array
                 if (competitorCount < competitors.length) {
-                    competitors[competitorCount] = " - " + "Competitor: " + name + "\n" + " - " + "Discipline: " + discipline + "\n" + " - " + "Result: " + result + "\n" + " - " + "Score: " + score + "\n";
+                    competitors[competitorCount] = " - " + "Competitor: " + name + "\n" + " - " + "Discipline: " + discipline + "\n" + " - " + "Result: " + result + "\n" + " - " + "Score: " + score + "\n" + " - ";
                     competitorCount++;
                 } else {
                     JOptionPane.showMessageDialog(null, "Maximum number of competitors reached.", "Error", JOptionPane.ERROR_MESSAGE);

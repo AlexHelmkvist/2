@@ -36,7 +36,7 @@ public class ExcelReader {
 
 			DataFormatter dataFormatter = new DataFormatter();
 			//Changed here
-			return dataFormatter.formatCellValue(cell) + " " + dataFormatter.formatCellValue(cell1) + " " + dataFormatter.formatCellValue(cell2) + " " + dataFormatter.formatCellValue(cell3);
+			return dataFormatter.formatCellValue(cell) +  dataFormatter.formatCellValue(cell1) +  dataFormatter.formatCellValue(cell2)  + dataFormatter.formatCellValue(cell3);
 		} else {
 			return "No file selected.";
 		}
