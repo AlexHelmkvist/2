@@ -338,5 +338,10 @@ public class MainGUI {
         public int getCompetitorCount() {
             return competitorCount;
         }
+        //Getter print excel button
+        public JButton getExcelPrintButton() {
+            return excelPrintButton;
+        }
+
     }
 

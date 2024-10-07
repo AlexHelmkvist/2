@@ -1,10 +1,17 @@
 package gui;
 import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.IOException;
+
 public class MainGUITest {
     private MainGUI mainGUI;
+
 
     @Before
     public void setUp() {
@@ -50,6 +57,33 @@ public class MainGUITest {
                 // Fail if the number of competitors exceeds 40
                 fail(e.getMessage());
             }
+        }
+    }
+    // Testar att en Excel-fil skapas när knappen trycks
+    @Test //Saleh test
+    public void testExcelFileCreation() throws IOException, InterruptedException {
+        // Testdata
+        String testName = "Saleh";
+        String testDiscipline = "Deca 100m";
+        String testResult = "10.5";
+
+        // Ange testdata i GUI:t
+        mainGUI.getNameField().setText(testName);
+        mainGUI.getDisciplineBox().setSelectedItem(testDiscipline);
+        mainGUI.getResultField().setText(testResult);
+        Thread.sleep(1000);
+        mainGUI.getCalculateButton().doClick();
+        Thread.sleep(1000);
+        // Klickar på "Print to Excel"-knappen
+        mainGUI.getExcelPrintButton().doClick();
+
+        try {
+          //If there is Results saved to Excel! in outputArea
+            assertTrue(mainGUI.getOutputArea().getText().contains("Results saved to Excel!"));
+
+        } catch (AssertionError e) {
+            // Hantera specifika assertionsfel
+            fail("Ett fel inträffade under testet: " + e.getMessage());
         }
     }
 }
