@@ -78,7 +78,7 @@ public class MainGUITest {
         mainGUI.getExcelPrintButton().doClick();
 
         try {
-          //If there is Results saved to Excel! in outputArea
+          //Assert that there is "Results saved to Excel!" in outputArea
             assertTrue(mainGUI.getOutputArea().getText().contains("Results saved to Excel!"));
 
         } catch (AssertionError e) {
