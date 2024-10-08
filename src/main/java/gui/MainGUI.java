@@ -120,7 +120,7 @@ public class MainGUI {
 
     // Save competitors' data to a file when the program stops
     private void saveData() {
-        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("programdata.dat"))) {
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("savedData.dat"))) {
             out.writeObject(competitors);
             out.writeInt(competitorCount);  // Save the number of competitors
             outputArea.append("Data saved successfully! \n");
@@ -131,10 +131,14 @@ public class MainGUI {
 
     // Load competitors' data from a file when the program starts
     private void loadData() {
-        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream("programdata.dat"))) {
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream("savedData.dat"))) {
             competitors = (String[]) in.readObject();
             competitorCount = in.readInt();
-            outputArea.append("Data loaded successfully! \n");
+            //If savedData is not empty
+            if (competitorCount > 0) {
+                outputArea.append("Data loaded successfully! \n");
+            }
+
             // Optionally, you can append loaded data to outputArea here
             for (int i = 0; i < competitorCount; i++) {
                 outputArea.append(competitors[i] + "\n");
