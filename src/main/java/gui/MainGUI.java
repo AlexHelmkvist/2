@@ -104,7 +104,7 @@ public class MainGUI {
         excelReadButton.setToolTipText("This button will read the data from an Excel file and display it on the screen");
 
 
-        // Attempts to create Excel file named "final results" and display error if it fails
+        // Attempts to create Excel file and display error if it fails
         try {
             excelPrinter = new ExcelPrinter("");
         } catch (IOException ex) {
@@ -144,10 +144,11 @@ public class MainGUI {
                 outputArea.append("Data loaded successfully! \n");
             }
 
-            // Optionally, you can append loaded data to outputArea here
+            // Display competitors' data
             for (int i = 0; i < competitorCount; i++) {
                 outputArea.append(competitors[i] + "\n");
             }
+
         } catch (IOException | ClassNotFoundException e) {
             outputArea.append("No saved data found. \n");
         }
