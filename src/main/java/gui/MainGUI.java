@@ -2,12 +2,14 @@ package gui;
 
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 
 import java.awt.*;
 import java.io.*;
+import java.util.ArrayList;
 
 import decathlon.*;
 import heptathlon.*;
@@ -18,11 +20,12 @@ public class MainGUI {
 
     private JTextField nameField;
     private JTextField resultField;
+    private JTable competitorTable;
     private JComboBox<String> disciplineBox;
     private JTextArea outputArea;
     private JButton calculateButton, excelPrintButton, excelReadButton, saveDataButton, clearDataButton;
     //Array to store competitor information
-    private String[] competitors = new String[40];
+    private ArrayList<Competitor> competitors = new ArrayList<>();
     //Count of competitors
     private int competitorCount = 0;
     // Instance variable for ExcelPrinter
@@ -110,6 +113,17 @@ public class MainGUI {
         } catch (IOException ex) {
             outputArea.append("Error: " + ex.getMessage() + "\n");
         }
+
+        // Table for displaying competitors and their results
+        String[] columnNames = {"Name", "Deca 100m", "Deca 400m", "Deca 1500m", "Deca 110m Hurdles",
+                "Deca Long Jump", "Deca High Jump", "Deca Pole Vault",
+                "Deca Discus Throw", "Deca Javelin Throw", "Deca Shot Put",
+                "Hept 100M Hurdles", "Hept 200M", "Hept 800M", "Hept High Jump",
+                "Hept Javelin Throw", "Hept Long Jump", "Hept Shot Put", "Total Score"};
+        tableModel = new DefaultTableModel(columnNames, 0);
+        competitorTable = new JTable(tableModel);
+        JScrollPane tableScrollPane = new JScrollPane(competitorTable);
+        panel.add(tableScrollPane);
 
         excelReader = new ExcelReader();
         frame.add(panel);
@@ -242,13 +256,16 @@ public class MainGUI {
                 }
 
                 // Save the competitor's information to the array
-                if (competitorCount < competitors.length) {
+               /* if (competitorCount < competitors.length) {
                     competitors[competitorCount] = " - " + "Competitor: " + name + "\n" + " - " + "Discipline: " + discipline + "\n" + " - " + "Result: " + result + "\n" + " - " + "Score: " + score + "\n";
                     competitorCount++;
                 } else {
                     JOptionPane.showMessageDialog(null, "Maximum number of competitors reached.", "Error", JOptionPane.ERROR_MESSAGE);
                     return; // Exit the method if the maximum number of competitors is reached
                 }
+*/
+                // Update the table with the new score
+                updateCompetitorInTable(competitor);
 
                 outputArea.append("Competitor: " + name + "\n");
                 outputArea.append("Discipline: " + discipline + "\n");
@@ -260,6 +277,43 @@ public class MainGUI {
                 JOptionPane.showMessageDialog(null, ex.getMessage(), "Invalid Result", JOptionPane.ERROR_MESSAGE);
             }
         }
+
+        // Find a competitor by name
+        private Competitor findCompetitorByName(String name) {
+            for (Competitor competitor : competitors) {
+                if (competitor.getName().equalsIgnoreCase(name)) {
+                    return competitor;
+                }
+            }
+            return null;  // No competitor found
+        }
+        // Method to add a competitor to the table
+        private void addCompetitorToTable(Competitor competitor) {
+            Object[] rowData = competitor.getRowData();
+            tableModel.addRow(rowData);
+        }
+
+        // Method to update an existing competitor's row in the table
+        private void updateCompetitorInTable(Competitor competitor) {
+            int rowIndex = findCompetitorRow(competitor.getName());
+            if (rowIndex != -1) {
+                Object[] rowData = competitor.getRowData();
+                for (int i = 0; i < rowData.length; i++) {
+                    tableModel.setValueAt(rowData[i], rowIndex, i);
+                }
+            }
+        }
+
+        // Find the row index of the competitor in the table
+        private int findCompetitorRow(String name) {
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                if (tableModel.getValueAt(i, 0).equals(name)) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+    }
     }
 
     // ActionListener for the "Save Data" button
@@ -328,14 +382,23 @@ public class MainGUI {
 
                 //Prepares the data for the Excel sheet
                 private Object[][] convertCompetitorsToData() {
-                    Object[][] data = new Object[competitorCount][4];
-                    for (int i = 0; i < competitorCount; i++) {
-                        String[] parts = competitors[i].split("-");
-                        data[i][0] = parts[0]; // Name
-                        data[i][1] = parts[1]; // Discipline
-                        data[i][2] = parts[2]; // Result
-                        data[i][3] = parts[3]; // Score
+                    Object[][] data = new Object[competitors.size()][18];  // 18 columns (17 events + name)
+                    for (int i = 0; i < competitors.size(); i++) {
+                        Competitor competitor = competitors.get(i);
+                        Object[] rowData = competitor.getRowData();  // Get competitor row data
+                        data[i] = rowData;
                     }
+
+
+                    /*
+            Object[][] data = new Object[competitorCount][4];
+            for (int i = 0; i < competitorCount; i++) {
+                String[] parts = competitors[i].split("-");
+                data[i][0] = parts[0]; // Name
+                data[i][1] = parts[1]; // Discipline
+                data[i][2] = parts[2]; // Result
+                data[i][3] = parts[3]; // Score
+            }*/
                     // Return the converted data
                     return data;
                 }
@@ -363,9 +426,10 @@ public class MainGUI {
             return outputArea;
         }
 
-        public String[] getCompetitors() {
-            return competitors;
-        }
+
+    /*public String[] getCompetitors() {
+        return competitors;
+    }*/
 
         public int getCompetitorCount() {
             return competitorCount;
