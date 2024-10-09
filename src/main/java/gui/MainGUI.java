@@ -2,13 +2,18 @@ package gui;
 
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 
 import java.awt.*;
-import java.io.IOException;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
+import common.Competitor;
 import decathlon.*;
 import heptathlon.*;
 import excel.*;
@@ -18,17 +23,19 @@ public class MainGUI {
 
     private JTextField nameField;
     private JTextField resultField;
+    private JTable competitorTable;  // Table to display competitors and their results
+    private DefaultTableModel tableModel;  // Model for the table
     private JComboBox<String> disciplineBox;
     private JTextArea outputArea;
-    private JButton calculateButton;
+    private JButton calculateButton, excelPrintButton, excelReadButton, saveDataButton, resumeDataButton, resetDataButton;
     //Array to store competitor information
-    private String[] competitors = new String[40];
+    private ArrayList<Competitor> competitors = new ArrayList<>();
     //Count of competitors
     private int competitorCount = 0;
-    // Button to print Excel file
-    private JButton excelPrintButton;
     // Instance variable for ExcelPrinter
     private ExcelPrinter excelPrinter;
+    // Instance variable for ExcelReader
+    private ExcelReader excelReader;
 
     public static void main(String[] args) {
         new MainGUI().createAndShowGUI();
@@ -39,7 +46,7 @@ public class MainGUI {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(500, 400);
 
-        JPanel panel = new JPanel(new GridLayout(6, 1));
+        JPanel panel = new JPanel(new GridLayout(8, 1)); // Updated to 7 rows
 
         // Input for competitor's name
         nameField = new JTextField(20);
@@ -55,9 +62,8 @@ public class MainGUI {
                 //Hept
                 "Hept 100M Hurdles", "Hept 200M", "Hept 800M",
                 "Hept High Jump", "Hept Javelin Throw", "Hept Long Jump", "Hept Shot Put"
-
-
         };
+
         disciplineBox = new JComboBox<>(disciplines);
         panel.add(new JLabel("Select Discipline:"));
         panel.add(disciplineBox);
@@ -72,37 +78,135 @@ public class MainGUI {
         calculateButton.addActionListener(new CalculateButtonListener());
         panel.add(calculateButton);
 
-        // Output area
-        outputArea = new JTextArea(5, 40);
-        outputArea.setEditable(false);
-        JScrollPane scrollPane = new JScrollPane(outputArea);
-        panel.add(scrollPane);
+        //Button to reset data
+        resetDataButton = new JButton("Reset Data");
+        resetDataButton.addActionListener(new resetDataButtonListener());
+        panel.add(resetDataButton);
+
+        // Button to read Excel file
+        excelReadButton = new JButton("Read Excel File");
+        excelReadButton.addActionListener(new ReadExcelButtonListener());
+        panel.add(excelReadButton);
 
         // Button to print result to excel file
         excelPrintButton = new JButton("Print to Excel");
         excelPrintButton.addActionListener(new ExcelPrintButtonListener());
         panel.add(excelPrintButton);
 
-        // Attempts to create Excel file named "final results" and display error if it fails
+        //Button to save data
+        saveDataButton = new JButton("Save Data");
+        saveDataButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                saveData(); // Save data to file
+            }
+        });
+        panel.add(saveDataButton);
+
+        //Button to resume data
+        resumeDataButton = new JButton("Resume Data");
+        resumeDataButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                resumeData(); // Resume data from file
+            }
+        });
+        panel.add(resumeDataButton);
+
+        //Tooltips for input fields and buttons
+        nameField.setToolTipText("Enter a valid name for the competitor, the name must start with a capital letter");
+        resultField.setToolTipText("Enter a valid result in numbers for the selected discipline");
+        excelPrintButton.setToolTipText("This button will save the results shown on the screen to an Excel file");
+        excelReadButton.setToolTipText("This button will read the data from an Excel file and display it on the screen");
+
+        // Output area
+        outputArea = new JTextArea(5, 40);
+        outputArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(outputArea);
+        panel.add(scrollPane);
+
+        // Table for displaying competitors and their results
+        String[] columnNames = {"Name", "Deca 100m", "Deca 400m", "Deca 1500m", "Deca 110m Hurdles",
+                "Deca Long Jump", "Deca High Jump", "Deca Pole Vault",
+                "Deca Discus Throw", "Deca Javelin Throw", "Deca Shot Put",
+                "Hept 100M Hurdles", "Hept 200M", "Hept 800M", "Hept High Jump",
+                "Hept Javelin Throw", "Hept Long Jump", "Hept Shot Put", "Total Score"};
+        tableModel = new DefaultTableModel(columnNames, 0);
+        competitorTable = new JTable(tableModel);
+        JScrollPane tableScrollPane = new JScrollPane(competitorTable);
+        panel.add(tableScrollPane);
+
+        // Attempts to create Excel file and display error if it fails
         try {
-            excelPrinter = new ExcelPrinter("final result");
+            excelPrinter = new ExcelPrinter("");
         } catch (IOException ex) {
             outputArea.append("Error: " + ex.getMessage() + "\n");
         }
 
+        excelReader = new ExcelReader();
         frame.add(panel);
         frame.setVisible(true);
+        //Resume at start
+        resumeData();
+    }
+
+    private void saveData() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("savedData.dat"))) {
+            for (Competitor competitor : competitors) {
+                // Construct line with competitor name and scores
+                //Write data to file
+                StringBuilder line = new StringBuilder();
+                line.append(competitor.getName()).append(",");
+                for (int score : competitor.getScores()) {
+                    line.append(score).append(",");
+                }
+                line.deleteCharAt(line.length() - 1); // Delete "-" at the end of line
+                writer.write(line.toString());
+                writer.newLine(); // New row for next competitor
+            }
+        } catch (IOException e) {
+            //Display error message if there is an error
+            JOptionPane.showMessageDialog(null, "Error: " + e.getMessage(), "File Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void resumeData() {
+        try (BufferedReader reader = new BufferedReader(new FileReader("savedData.dat"))) {
+            String line;
+            competitors.clear(); // Clear current competitors
+            // Read data from file
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                String name = parts[0];
+                int[] scores = new int[17];
+                for (int i = 1; i < parts.length; i++) {
+                    scores[i - 1] = Integer.parseInt(parts[i]);
+                }
+                Competitor competitor = new Competitor(name);
+                competitor.setScores(scores); // Set score
+                competitors.add(competitor);
+            }
+            updateTable(); // Update the table with the new data
+        } catch (IOException e) {
+            //Display error message if there is an error
+            JOptionPane.showMessageDialog(null, "Error: " + e.getMessage(), "File Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private class CalculateButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            String name = nameField.getText();
+            String name = nameField.getText().trim();
             String discipline = (String) disciplineBox.getSelectedItem();
             String resultText = resultField.getText();
 
             try {
                 double result = Double.parseDouble(resultText);
+
+                if (name.isEmpty() || !Character.isUpperCase(name.charAt(0))) {
+                    JOptionPane.showMessageDialog(null, "Please enter a valid name for the competitor starting with an uppercase letter", "Invalid Name", JOptionPane.ERROR_MESSAGE);
+                    return; // Exit the method if name is empty
+                }
 
                 int score = 0;
                 switch (discipline) {
@@ -176,16 +280,20 @@ public class MainGUI {
                         break;
                 }
 
-
-                // Save the competitor's information to the array
-                if (competitorCount < competitors.length) {
-                    competitors[competitorCount] = name + "-" + discipline + "-" + result + "-" + score;
-                    competitorCount++;
-                } else {
-                    JOptionPane.showMessageDialog(null, "Maximum number of competitors reached.", "Error", JOptionPane.ERROR_MESSAGE);
-                    return; // Exit the method if the maximum number of competitors is reached
+                // Find an existing competitor or create a new one
+                Competitor competitor = findCompetitorByName(name);
+                if (competitor == null) {
+                    competitor = new Competitor(name);  // Create new competitor
+                    competitors.add(competitor);  // Add to list
+                    addCompetitorToTable(competitor);  // Add a new row to the table
                 }
-                
+
+                // Update the competitor's score for the current discipline
+                competitor.setScore(discipline, score);
+
+                // Update the table with the new score
+                updateCompetitorInTable(competitor);
+
                 outputArea.append("Competitor: " + name + "\n");
                 outputArea.append("Discipline: " + discipline + "\n");
                 outputArea.append("Result: " + result + "\n");
@@ -196,64 +304,143 @@ public class MainGUI {
                 JOptionPane.showMessageDialog(null, ex.getMessage(), "Invalid Result", JOptionPane.ERROR_MESSAGE);
             }
         }
+
+        // Find a competitor by name
+        private Competitor findCompetitorByName(String name) {
+            for (Competitor competitor : competitors) {
+                if (competitor.getName().equalsIgnoreCase(name)) {
+                    return competitor;
+                }
+            }
+            return null;  // No competitor found
+        }
+        // Method to add a competitor to the table
+        private void addCompetitorToTable(Competitor competitor) {
+            Object[] rowData = competitor.getRowData();
+            tableModel.addRow(rowData);
+        }
+
+        // Method to update an existing competitor's row in the table
+        private void updateCompetitorInTable(Competitor competitor) {
+            int rowIndex = findCompetitorRow(competitor.getName());
+            if (rowIndex != -1) {
+                Object[] rowData = competitor.getRowData();
+                for (int i = 0; i < rowData.length; i++) {
+                    tableModel.setValueAt(rowData[i], rowIndex, i);
+                }
+            }
+        }
+
+        // Find the row index of the competitor in the table
+        private int findCompetitorRow(String name) {
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                if (tableModel.getValueAt(i, 0).equals(name)) {
+                    return i;
+                }
+            }
+            return -1;
+        }
     }
 
-    // ActionListener for the "Print to Excel" button
-    private class ExcelPrintButtonListener implements ActionListener {
+    //ActionListener for the "Reset Data" button
+    private class resetDataButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            nameField.setText("");
+            resultField.setText("");
+            disciplineBox.setSelectedIndex(0);
+            outputArea.setText("");
+            competitorCount = 0;
+            competitors.clear();
+            tableModel.setRowCount(0);
+        }
+    }
+    // ActionListener for the "Read Excel File" button
+    private class ReadExcelButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             try {
-                // Attempt to save the data to Excel
-                Object[][] data = convertCompetitorsToData();
-                excelPrinter.add(data, "Results");
-                excelPrinter.write();
-                outputArea.append("Results saved to Excel!\n");
+                // attempt to read the data from the Excel file
+                excelReader = new ExcelReader();
+                String excelData = excelReader.getCellInfo(0, 0, 0, 1, 2, 3);
+
+                //Read the data
+                if (excelData.equals("No file selected.")) {
+                    // Show an error if no file is selected
+                    JOptionPane.showMessageDialog(null, excelData, "File Error", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    // If no error was found, reset the output area and display the data
+                    outputArea.setText("");
+                    outputArea.append(excelData+"\n");
+                }
             } catch (IOException ex) {
-                outputArea.append("Error saving to Excel: " + ex.getMessage() + "\n");
+                outputArea.append("Error: " + ex.getMessage() + "\n");
+                JOptionPane.showMessageDialog(null, "Error! Cannot read the selected file!", "File Error", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+            // ActionListener for the "Print to Excel" button
+            private class ExcelPrintButtonListener implements ActionListener {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        // Attempt to save the data to Excel
+                        Object[][] data = convertCompetitorsToData();
+                        excelPrinter.add(data, "Results");
+                        excelPrinter.write();
+                        outputArea.append("Results saved to Excel!\n");
+                    } catch (IOException ex) {
+                        outputArea.append("Error saving to Excel: " + ex.getMessage() + "\n");
+                    }
+                }
 
-        //Prepares the data for the Excel sheet
-        private Object[][] convertCompetitorsToData() {
-            Object[][] data = new Object[competitorCount][4];
-            for (int i = 0; i < competitorCount; i++) {
-                String[] parts = competitors[i].split("-");
-                data[i][0] = parts[0]; // Name
-                data[i][1] = parts[1]; // Discipline
-                data[i][2] = parts[2]; // Result
-                data[i][3] = parts[3]; // Score
+                //Prepares the data for the Excel sheet
+                private Object[][] convertCompetitorsToData() {
+                    Object[][] data = new Object[competitors.size()][18];  // 18 columns (17 events + name)
+                    for (int i = 0; i < competitors.size(); i++) {
+                        Competitor competitor = competitors.get(i);
+                        Object[] rowData = competitor.getRowData();  // Get competitor row data
+                        data[i] = rowData;
+                    }
+                    // Return the converted data
+                    return data;
+                }
             }
-            // Return the converted data
-            return data;
+    private void updateTable() {
+        tableModel.setRowCount(0); // Töm tabellen innan den uppdateras
+        for (Competitor competitor : competitors) {
+            tableModel.addRow(competitor.getRowData());
         }
     }
 
-    //Getters to get interaction outside the class
-    public JTextField getNameField() {
-        return nameField;
-    }
 
-    public JComboBox<String> getDisciplineBox() {
-        return disciplineBox;
-    }
+        //Getters to get interaction outside the class
+        public JTextField getNameField() {
+            return nameField;
+        }
 
-    public JTextField getResultField() {
-        return resultField;
-    }
+        public JComboBox<String> getDisciplineBox() {
+            return disciplineBox;
+        }
 
-    public JButton getCalculateButton() {
-        return calculateButton;
-    }
+        public JTextField getResultField() {
+            return resultField;
+        }
 
-    public JTextArea getOutputArea() {
-        return outputArea;
-    }
+        public JButton getCalculateButton() {
+            return calculateButton;
+        }
 
-    public String[] getCompetitors() {
-        return competitors;
-    }
+        public JTextArea getOutputArea() {
+            return outputArea;
+        }
 
-    public int getCompetitorCount() {
+        public JButton getExcelPrintButton() {
+            return excelPrintButton;
+        }
+
+        public int getCompetitorCount() {
         return competitorCount;
     }
-}
+    }
+
