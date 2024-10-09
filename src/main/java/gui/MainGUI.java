@@ -10,6 +10,8 @@ import java.awt.event.ActionListener;
 import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import common.Competitor;
 import decathlon.*;
@@ -25,7 +27,7 @@ public class MainGUI {
     private DefaultTableModel tableModel;  // Model for the table
     private JComboBox<String> disciplineBox;
     private JTextArea outputArea;
-    private JButton calculateButton, excelPrintButton, excelReadButton, saveDataButton, clearDataButton;
+    private JButton calculateButton, excelPrintButton, excelReadButton, saveDataButton, resumeDataButton, resetDataButton;
     //Array to store competitor information
     private ArrayList<Competitor> competitors = new ArrayList<>();
     //Count of competitors
@@ -76,11 +78,10 @@ public class MainGUI {
         calculateButton.addActionListener(new CalculateButtonListener());
         panel.add(calculateButton);
 
-        // Output area
-        outputArea = new JTextArea(5, 40);
-        outputArea.setEditable(false);
-        JScrollPane scrollPane = new JScrollPane(outputArea);
-        panel.add(scrollPane);
+        //Button to reset data
+        resetDataButton = new JButton("Reset Data");
+        resetDataButton.addActionListener(new resetDataButtonListener());
+        panel.add(resetDataButton);
 
         // Button to read Excel file
         excelReadButton = new JButton("Read Excel File");
@@ -94,13 +95,23 @@ public class MainGUI {
 
         //Button to save data
         saveDataButton = new JButton("Save Data");
-        saveDataButton.addActionListener(new SaveDataButtonListener());
+        saveDataButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                saveData(); // Save data to file
+            }
+        });
         panel.add(saveDataButton);
 
-        //Button to clear data
-        clearDataButton = new JButton("Clear Data");
-        clearDataButton.addActionListener(new ClearDataButtonListener());
-        panel.add(clearDataButton);
+        //Button to resume data
+        resumeDataButton = new JButton("Resume Data");
+        resumeDataButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                resumeData(); // Resume data from file
+            }
+        });
+        panel.add(resumeDataButton);
 
         //Tooltips for input fields and buttons
         nameField.setToolTipText("Enter a valid name for the competitor, the name must start with a capital letter");
@@ -108,13 +119,11 @@ public class MainGUI {
         excelPrintButton.setToolTipText("This button will save the results shown on the screen to an Excel file");
         excelReadButton.setToolTipText("This button will read the data from an Excel file and display it on the screen");
 
-
-        // Attempts to create Excel file and display error if it fails
-        try {
-            excelPrinter = new ExcelPrinter("");
-        } catch (IOException ex) {
-            outputArea.append("Error: " + ex.getMessage() + "\n");
-        }
+        // Output area
+        outputArea = new JTextArea(5, 40);
+        outputArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(outputArea);
+        panel.add(scrollPane);
 
         // Table for displaying competitors and their results
         String[] columnNames = {"Name", "Deca 100m", "Deca 400m", "Deca 1500m", "Deca 110m Hurdles",
@@ -127,48 +136,60 @@ public class MainGUI {
         JScrollPane tableScrollPane = new JScrollPane(competitorTable);
         panel.add(tableScrollPane);
 
+        // Attempts to create Excel file and display error if it fails
+        try {
+            excelPrinter = new ExcelPrinter("");
+        } catch (IOException ex) {
+            outputArea.append("Error: " + ex.getMessage() + "\n");
+        }
+
         excelReader = new ExcelReader();
         frame.add(panel);
         frame.setVisible(true);
-
-        // Load saved data when the program starts
-        loadData();
-
-        // Save data when the program is stopped
-        Runtime.getRuntime().addShutdownHook(new Thread(this::saveData));
-
+        //Resume at start
+        resumeData();
     }
 
-    // Save competitors' data to a file when the program stops
     private void saveData() {
-        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("savedData.dat"))) {
-            out.writeObject(competitors);
-            out.writeInt(competitorCount);  // Save the number of competitors
-            outputArea.append("Data saved successfully! \n");
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("savedData.dat"))) {
+            for (Competitor competitor : competitors) {
+                // Construct line with competitor name and scores
+                //Write data to file
+                StringBuilder line = new StringBuilder();
+                line.append(competitor.getName()).append(",");
+                for (int score : competitor.getScores()) {
+                    line.append(score).append(",");
+                }
+                line.deleteCharAt(line.length() - 1); // Delete "-" at the end of line
+                writer.write(line.toString());
+                writer.newLine(); // New row for next competitor
+            }
         } catch (IOException e) {
-            outputArea.append("Error saving data: " + e.getMessage());
+            //Display error message if there is an error
+            JOptionPane.showMessageDialog(null, "Error: " + e.getMessage(), "File Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    // Load competitors' data from a file when the program starts
-    private void loadData() {
-        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream("savedData.dat"))) {
-            Object obj = in.readObject();
-            if (obj instanceof ArrayList<?>) {
-                competitors = (ArrayList<Competitor>) obj; // Gör om till rätt typ
-                competitorCount = in.readInt(); // Ladda antalet tävlande
-                if (competitorCount > 0) {
-                    outputArea.append("Data loaded successfully! \n");
+    private void resumeData() {
+        try (BufferedReader reader = new BufferedReader(new FileReader("savedData.dat"))) {
+            String line;
+            competitors.clear(); // Clear current competitors
+            // Read data from file
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                String name = parts[0];
+                int[] scores = new int[17];
+                for (int i = 1; i < parts.length; i++) {
+                    scores[i - 1] = Integer.parseInt(parts[i]);
                 }
-                // Display competitors' data
-                for (int i = 0; i < competitorCount; i++) {
-                    outputArea.append(competitors.get(i).getName() + "\n"); // Ändrad för att använda rätt metod
-                }
+                Competitor competitor = new Competitor(name);
+                competitor.setScores(scores); // Set score
+                competitors.add(competitor);
             }
-        } catch (IOException | ClassNotFoundException e) {
-            outputArea.append("No saved data found. \n");
-        } catch (ClassCastException e) {
-            outputArea.append("Error loading data: " + e.getMessage() + "\n");
+            updateTable(); // Update the table with the new data
+        } catch (IOException e) {
+            //Display error message if there is an error
+            JOptionPane.showMessageDialog(null, "Error: " + e.getMessage(), "File Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -321,23 +342,19 @@ public class MainGUI {
         }
     }
 
-    // ActionListener for the "Save Data" button
-    private class SaveDataButtonListener implements ActionListener {
+    //ActionListener for the "Reset Data" button
+    private class resetDataButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            saveData();
-        }
-    }
-
-    //ActionListener for the "Clear Data" button
-    private class ClearDataButtonListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            competitorCount = 0;
+            nameField.setText("");
+            resultField.setText("");
+            disciplineBox.setSelectedIndex(0);
             outputArea.setText("");
+            competitorCount = 0;
+            competitors.clear();
+            tableModel.setRowCount(0);
         }
     }
-
     // ActionListener for the "Read Excel File" button
     private class ReadExcelButtonListener implements ActionListener {
         @Override
@@ -389,6 +406,12 @@ public class MainGUI {
                     return data;
                 }
             }
+    private void updateTable() {
+        tableModel.setRowCount(0); // Töm tabellen innan den uppdateras
+        for (Competitor competitor : competitors) {
+            tableModel.addRow(competitor.getRowData());
+        }
+    }
 
 
         //Getters to get interaction outside the class
@@ -412,11 +435,11 @@ public class MainGUI {
             return outputArea;
         }
 
-        //Getter print excel button
         public JButton getExcelPrintButton() {
             return excelPrintButton;
         }
-    public int getCompetitorCount() {
+
+        public int getCompetitorCount() {
         return competitorCount;
     }
     }

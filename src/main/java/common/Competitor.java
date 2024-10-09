@@ -90,5 +90,12 @@ public class Competitor {
         return rowData;
     }
 
+    public int[] getScores() {
+        return scores;
+    }
+
+    public void setScores(int[] scores) {
+        this.scores = scores;
+    }
 }
 
