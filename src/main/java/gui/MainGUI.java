@@ -55,9 +55,8 @@ public class MainGUI {
                 //Hept
                 "Hept 100M Hurdles", "Hept 200M", "Hept 800M",
                 "Hept High Jump", "Hept Javelin Throw", "Hept Long Jump", "Hept Shot Put"
-
-
         };
+
         disciplineBox = new JComboBox<>(disciplines);
         panel.add(new JLabel("Select Discipline:"));
         panel.add(disciplineBox);
@@ -98,6 +97,13 @@ public class MainGUI {
         clearDataButton.addActionListener(new ClearDataButtonListener());
         panel.add(clearDataButton);
 
+        //Tooltips for input fields and buttons
+        nameField.setToolTipText("Enter a valid name for the competitor, the name must start with a capital letter");
+        resultField.setToolTipText("Enter a valid result in numbers for the selected discipline");
+        excelPrintButton.setToolTipText("This button will save the results shown on the screen to an Excel file");
+        excelReadButton.setToolTipText("This button will read the data from an Excel file and display it on the screen");
+
+
         // Attempts to create Excel file named "final results" and display error if it fails
         try {
             excelPrinter = new ExcelPrinter("");
@@ -116,7 +122,6 @@ public class MainGUI {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> saveData()));
 
     }
-
 
     // Save competitors' data to a file when the program stops
     private void saveData() {
@@ -151,12 +156,17 @@ public class MainGUI {
     private class CalculateButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            String name = nameField.getText();
+            String name = nameField.getText().trim();
             String discipline = (String) disciplineBox.getSelectedItem();
             String resultText = resultField.getText();
 
             try {
                 double result = Double.parseDouble(resultText);
+
+                if (name.isEmpty() || !Character.isUpperCase(name.charAt(0))) {
+                    JOptionPane.showMessageDialog(null, "Please enter a valid name for the competitor starting with an uppercase letter", "Invalid Name", JOptionPane.ERROR_MESSAGE);
+                    return; // Exit the method if name is empty
+                }
 
                 int score = 0;
                 switch (discipline) {
@@ -230,10 +240,9 @@ public class MainGUI {
                         break;
                 }
 
-
                 // Save the competitor's information to the array
                 if (competitorCount < competitors.length) {
-                    competitors[competitorCount] = " - " + "Competitor: " + name + "\n" + " - " + "Discipline: " + discipline + "\n" + " - " + "Result: " + result + "\n" + " - " + "Score: " + score + "\n" + " - ";
+                    competitors[competitorCount] = " - " + "Competitor: " + name + "\n" + " - " + "Discipline: " + discipline + "\n" + " - " + "Result: " + result + "\n" + " - " + "Score: " + score + "\n";
                     competitorCount++;
                 } else {
                     JOptionPane.showMessageDialog(null, "Maximum number of competitors reached.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -276,10 +285,20 @@ public class MainGUI {
             try {
                 // attempt to read the data from the Excel file
                 excelReader = new ExcelReader();
-                String excelData = excelReader.getCellInfo( 0, 0, 0,1,2,3);
-                outputArea.append(excelData);
+                String excelData = excelReader.getCellInfo(0, 0, 0, 1, 2, 3);
+
+                //Read the data
+                if (excelData.equals("No file selected.")) {
+                    // Show an error if no file is selected
+                    JOptionPane.showMessageDialog(null, excelData, "File Error", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    // If no error was found, reset the output area and display the data
+                    outputArea.setText("");
+                    outputArea.append(excelData+"\n");
+                }
             } catch (IOException ex) {
-                outputArea.append("Error reading Excel file: " + ex.getMessage() + "\n");
+                outputArea.append("Error: " + ex.getMessage() + "\n");
+                JOptionPane.showMessageDialog(null, "Error! Cannot read the selected file!", "File Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -288,13 +307,21 @@ public class MainGUI {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     try {
-                        // Attempt to save the data to Excel
-                        Object[][] data = convertCompetitorsToData();
-                        excelPrinter.add(data, "Results");
-                        excelPrinter.write();
-                        outputArea.append("Results saved to Excel!\n");
+                        //if there is at least one competitor, attempt to save the data to Excel
+                        if (competitorCount > 0) {
+                            Object[][] data = convertCompetitorsToData();
+                            excelPrinter.add(data, "Results");
+                            excelPrinter.write();
+                            outputArea.append("Results saved to Excel!\n");
+                        }
+                        else {
+                            JOptionPane.showMessageDialog(null, "No competitors found!", "File Error", JOptionPane.ERROR_MESSAGE);
+                        }
+
                     } catch (IOException ex) {
-                        outputArea.append("Error saving to Excel: " + ex.getMessage() + "\n");
+                       //Error printing to Excel
+                        outputArea.append("Error: " + ex.getMessage() + "\n");
+                        JOptionPane.showMessageDialog(null, "Error! The excel file could not be saved!", "File Error", JOptionPane.ERROR_MESSAGE);
                     }
                 }
 

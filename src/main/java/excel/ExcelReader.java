@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+
+import org.apache.poi.openxml4j.exceptions.NotOfficeXmlFileException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -13,6 +15,9 @@ import javax.swing.*;
 public class ExcelReader {
 	
 	public String getCellInfo( int sheetNumber, int rowNumber, int colNumber, int colNumber1, int colNumber2, int colNumber3) throws IOException {
+
+	try {
+
 		// Set the path of the Excel file
 		JFileChooser fileChooser = new JFileChooser("C:/Eclipse/");
 		fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Excel Files", "xls", "xlsx"));
@@ -40,5 +45,12 @@ public class ExcelReader {
 		} else {
 			return "No file selected.";
 		}
+
+	} catch (NotOfficeXmlFileException e) {
+		throw new IOException("This is not a valid Excel file: " + e.getMessage());  // This exception is thrown if the file is not an Excel file
+	} catch (Exception e) {
+		throw new IOException("Error: " + e.getMessage());  // This exception is thrown if there is an error reading the file
+	}
+
 	}
 }

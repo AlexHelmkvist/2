@@ -22,35 +22,42 @@ public class ExcelPrinter {
 		excelName = name;
 	}
 
-	public void add(Object[][] data, String sheetName) {
+	public void add(Object[][] data, String sheetName) throws IOException {
 
-		XSSFSheet sheet = workbook.createSheet(sheetName);
+		try {
 
-		int rowCount = 0;
+			XSSFSheet sheet = workbook.createSheet(sheetName);
 
-		for (Object[] aBook : data) {
-			Row row = sheet.createRow(rowCount);
-			rowCount++;
-			int columnCount = 0;
+			int rowCount = 0;
 
-			for (Object field : aBook) {
-				Cell cell = row.createCell(columnCount);
-				columnCount++;
-				
-				if (field instanceof String) {
-					cell.setCellValue((String) field);
-					
-				} else if (field instanceof Integer) {
-					cell.setCellValue((Integer) field);
-					
-				} else if (field instanceof Double) {
-					cell.setCellValue((Double) field);
-					
+			for (Object[] aBook : data) {
+				Row row = sheet.createRow(rowCount);
+				rowCount++;
+				int columnCount = 0;
+
+				for (Object field : aBook) {
+					Cell cell = row.createCell(columnCount);
+					columnCount++;
+
+					if (field instanceof String) {
+						cell.setCellValue((String) field);
+
+					} else if (field instanceof Integer) {
+						cell.setCellValue((Integer) field);
+
+					} else if (field instanceof Double) {
+						cell.setCellValue((Double) field);
+
+					}
+
 				}
+
 			}
+
+		} catch (IllegalArgumentException e) {
+			throw new IOException(e.getMessage());  // This exception is thrown if there is an error reading the file
 		}
 	}
-
 	public void write() throws IOException {
 		//String filePath; Deklarera filvägen
 		String os = System.getProperty("os.name").toLowerCase(); // Hämtar operativsystemets namn och gör det till små bokstäver
