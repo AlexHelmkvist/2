@@ -21,7 +21,8 @@ public class MainGUI {
 
     private JTextField nameField;
     private JTextField resultField;
-    private JTable competitorTable;
+    private JTable competitorTable;  // Table to display competitors and their results
+    private DefaultTableModel tableModel;  // Model for the table
     private JComboBox<String> disciplineBox;
     private JTextArea outputArea;
     private JButton calculateButton, excelPrintButton, excelReadButton, saveDataButton, clearDataButton;
@@ -43,7 +44,7 @@ public class MainGUI {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(500, 400);
 
-        JPanel panel = new JPanel(new GridLayout(6, 1));
+        JPanel panel = new JPanel(new GridLayout(8, 1)); // Updated to 7 rows
 
         // Input for competitor's name
         nameField = new JTextField(20);
@@ -134,7 +135,7 @@ public class MainGUI {
         loadData();
 
         // Save data when the program is stopped
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> saveData()));
+        Runtime.getRuntime().addShutdownHook(new Thread(this::saveData));
 
     }
 
@@ -152,20 +153,22 @@ public class MainGUI {
     // Load competitors' data from a file when the program starts
     private void loadData() {
         try (ObjectInputStream in = new ObjectInputStream(new FileInputStream("savedData.dat"))) {
-            competitors = (String[]) in.readObject();
-            competitorCount = in.readInt();
-            //If savedData is not empty
-            if (competitorCount > 0) {
-                outputArea.append("Data loaded successfully! \n");
+            Object obj = in.readObject();
+            if (obj instanceof ArrayList<?>) {
+                competitors = (ArrayList<Competitor>) obj; // Gör om till rätt typ
+                competitorCount = in.readInt(); // Ladda antalet tävlande
+                if (competitorCount > 0) {
+                    outputArea.append("Data loaded successfully! \n");
+                }
+                // Display competitors' data
+                for (int i = 0; i < competitorCount; i++) {
+                    outputArea.append(competitors.get(i).getName() + "\n"); // Ändrad för att använda rätt metod
+                }
             }
-
-            // Display competitors' data
-            for (int i = 0; i < competitorCount; i++) {
-                outputArea.append(competitors[i] + "\n");
-            }
-
         } catch (IOException | ClassNotFoundException e) {
             outputArea.append("No saved data found. \n");
+        } catch (ClassCastException e) {
+            outputArea.append("Error loading data: " + e.getMessage() + "\n");
         }
     }
 
@@ -256,15 +259,17 @@ public class MainGUI {
                         break;
                 }
 
-                // Save the competitor's information to the array
-               /* if (competitorCount < competitors.length) {
-                    competitors[competitorCount] = " - " + "Competitor: " + name + "\n" + " - " + "Discipline: " + discipline + "\n" + " - " + "Result: " + result + "\n" + " - " + "Score: " + score + "\n";
-                    competitorCount++;
-                } else {
-                    JOptionPane.showMessageDialog(null, "Maximum number of competitors reached.", "Error", JOptionPane.ERROR_MESSAGE);
-                    return; // Exit the method if the maximum number of competitors is reached
+                // Find an existing competitor or create a new one
+                Competitor competitor = findCompetitorByName(name);
+                if (competitor == null) {
+                    competitor = new Competitor(name);  // Create new competitor
+                    competitors.add(competitor);  // Add to list
+                    addCompetitorToTable(competitor);  // Add a new row to the table
                 }
-*/
+
+                // Update the competitor's score for the current discipline
+                competitor.setScore(discipline, score);
+
                 // Update the table with the new score
                 updateCompetitorInTable(competitor);
 
@@ -315,7 +320,6 @@ public class MainGUI {
             return -1;
         }
     }
-    }
 
     // ActionListener for the "Save Data" button
     private class SaveDataButtonListener implements ActionListener {
@@ -363,21 +367,13 @@ public class MainGUI {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     try {
-                        //if there is at least one competitor, attempt to save the data to Excel
-                        if (competitorCount > 0) {
-                            Object[][] data = convertCompetitorsToData();
-                            excelPrinter.add(data, "Results");
-                            excelPrinter.write();
-                            outputArea.append("Results saved to Excel!\n");
-                        }
-                        else {
-                            JOptionPane.showMessageDialog(null, "No competitors found!", "File Error", JOptionPane.ERROR_MESSAGE);
-                        }
-
+                        // Attempt to save the data to Excel
+                        Object[][] data = convertCompetitorsToData();
+                        excelPrinter.add(data, "Results");
+                        excelPrinter.write();
+                        outputArea.append("Results saved to Excel!\n");
                     } catch (IOException ex) {
-                       //Error printing to Excel
-                        outputArea.append("Error: " + ex.getMessage() + "\n");
-                        JOptionPane.showMessageDialog(null, "Error! The excel file could not be saved!", "File Error", JOptionPane.ERROR_MESSAGE);
+                        outputArea.append("Error saving to Excel: " + ex.getMessage() + "\n");
                     }
                 }
 
@@ -389,17 +385,6 @@ public class MainGUI {
                         Object[] rowData = competitor.getRowData();  // Get competitor row data
                         data[i] = rowData;
                     }
-
-
-                    /*
-            Object[][] data = new Object[competitorCount][4];
-            for (int i = 0; i < competitorCount; i++) {
-                String[] parts = competitors[i].split("-");
-                data[i][0] = parts[0]; // Name
-                data[i][1] = parts[1]; // Discipline
-                data[i][2] = parts[2]; // Result
-                data[i][3] = parts[3]; // Score
-            }*/
                     // Return the converted data
                     return data;
                 }
@@ -427,18 +412,12 @@ public class MainGUI {
             return outputArea;
         }
 
-
-    /*public String[] getCompetitors() {
-        return competitors;
-    }*/
-
-        public int getCompetitorCount() {
-            return competitorCount;
-        }
         //Getter print excel button
         public JButton getExcelPrintButton() {
             return excelPrintButton;
         }
-
+    public int getCompetitorCount() {
+        return competitorCount;
+    }
     }
 
