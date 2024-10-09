@@ -11,6 +11,7 @@ import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
 
+import common.Competitor;
 import decathlon.*;
 import heptathlon.*;
 import excel.*;
