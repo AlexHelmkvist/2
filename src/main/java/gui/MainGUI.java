@@ -361,6 +361,15 @@ public class MainGUI {
                 // Get the list of competitors from the Excel file
                 List<Competitor> competitorsFromExcel = excelReader.readExcelData();
 
+                // Reset before adding new competitors
+                nameField.setText("");
+                resultField.setText("");
+                disciplineBox.setSelectedIndex(0);
+                outputArea.setText("");
+                competitorCount = 0;
+                competitors.clear();
+                tableModel.setRowCount(0);
+
                 // Add these competitors to the current list of competitors
                 competitors.addAll(competitorsFromExcel);
 
