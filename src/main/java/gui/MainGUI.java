@@ -10,7 +10,6 @@ import java.awt.event.ActionListener;
 import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import common.Competitor;
@@ -35,7 +34,7 @@ public class MainGUI {
     // Instance variable for ExcelPrinter
     private ExcelPrinter excelPrinter;
     // Instance variable for ExcelReader
-    private ExcelReader excelReader;
+    private ExcelReader excelReader = new ExcelReader();
 
     public static void main(String[] args) {
         new MainGUI().createAndShowGUI();
@@ -85,7 +84,7 @@ public class MainGUI {
 
         // Button to read Excel file
         excelReadButton = new JButton("Read Excel File");
-        excelReadButton.addActionListener(new ReadExcelButtonListener());
+        excelReadButton.addActionListener(new readExcelButtonListener());
         panel.add(excelReadButton);
 
         // Button to print result to excel file
@@ -113,7 +112,7 @@ public class MainGUI {
         });
         panel.add(resumeDataButton);
 
-        //Tooltips for input fields and buttons
+        // Tooltips for input fields and buttons
         nameField.setToolTipText("Enter a valid name for the competitor, the name must start with a capital letter");
         resultField.setToolTipText("Enter a valid result in numbers for the selected discipline");
         excelPrintButton.setToolTipText("This button will save the results shown on the screen to an Excel file");
@@ -143,7 +142,6 @@ public class MainGUI {
             outputArea.append("Error: " + ex.getMessage() + "\n");
         }
 
-        excelReader = new ExcelReader();
         frame.add(panel);
         frame.setVisible(true);
         //Resume at start
@@ -176,7 +174,7 @@ public class MainGUI {
             competitors.clear(); // Clear current competitors
             // Read data from file
             while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
+                String[] parts = line.split(","); // Split line into parts with delimiter ","
                 String name = parts[0];
                 int[] scores = new int[17];
                 for (int i = 1; i < parts.length; i++) {
@@ -356,26 +354,23 @@ public class MainGUI {
         }
     }
     // ActionListener for the "Read Excel File" button
-    private class ReadExcelButtonListener implements ActionListener {
+    private class readExcelButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             try {
-                // attempt to read the data from the Excel file
-                excelReader = new ExcelReader();
-                String excelData = excelReader.getCellInfo(0, 0, 0, 1, 2, 3);
+                // Get the list of competitors from the Excel file
+                List<Competitor> competitorsFromExcel = excelReader.readExcelData();
 
-                //Read the data
-                if (excelData.equals("No file selected.")) {
-                    // Show an error if no file is selected
-                    JOptionPane.showMessageDialog(null, excelData, "File Error", JOptionPane.ERROR_MESSAGE);
-                } else {
-                    // If no error was found, reset the output area and display the data
-                    outputArea.setText("");
-                    outputArea.append(excelData+"\n");
-                }
+                // Add these competitors to the current list of competitors
+                competitors.addAll(competitorsFromExcel);
+
+                // Update the table with the new competitors
+                updateTable();
+
             } catch (IOException ex) {
+                // Display an error message
                 outputArea.append("Error: " + ex.getMessage() + "\n");
-                JOptionPane.showMessageDialog(null, "Error! Cannot read the selected file!", "File Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null, "Error reading Excel file!", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -390,7 +385,8 @@ public class MainGUI {
                         excelPrinter.write();
                         outputArea.append("Results saved to Excel!\n");
                     } catch (IOException ex) {
-                        outputArea.append("Error saving to Excel: " + ex.getMessage() + "\n");
+                        outputArea.append("Error: " + ex.getMessage() + "\n");
+                        JOptionPane.showMessageDialog(null, "Error saving to Excel!", "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 }
 
@@ -407,7 +403,7 @@ public class MainGUI {
                 }
             }
     private void updateTable() {
-        tableModel.setRowCount(0); // Töm tabellen innan den uppdateras
+        tableModel.setRowCount(0); // Empty the table before adding new competitors
         for (Competitor competitor : competitors) {
             tableModel.addRow(competitor.getRowData());
         }
