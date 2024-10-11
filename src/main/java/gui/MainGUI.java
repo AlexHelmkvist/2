@@ -8,6 +8,8 @@ import java.awt.event.ActionListener;
 
 
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -144,8 +146,19 @@ public class MainGUI {
 
         frame.add(panel);
         frame.setVisible(true);
-        //Resume at start
-        resumeData();
+        //Resume at start if savedData.dat exists
+        if (new File("savedData.dat").exists()) {
+            resumeData();
+        }
+
+
+        //Save data before closing
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                saveData();
+            }
+        });
     }
 
     private void saveData() {
@@ -166,12 +179,15 @@ public class MainGUI {
             //Display error message if there is an error
             JOptionPane.showMessageDialog(null, "Error: " + e.getMessage(), "File Error", JOptionPane.ERROR_MESSAGE);
         }
+        // If the data was saved successfully, display a message
+        JOptionPane.showMessageDialog(null, "Data saved!", "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void resumeData() {
         try (BufferedReader reader = new BufferedReader(new FileReader("savedData.dat"))) {
             String line;
             competitors.clear(); // Clear current competitors
+            outputArea.setText("");
             // Read data from file
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(","); // Split line into parts with delimiter ","
@@ -186,8 +202,9 @@ public class MainGUI {
             }
             updateTable(); // Update the table with the new data
         } catch (IOException e) {
-            //Display error message if there is an error
-            JOptionPane.showMessageDialog(null, "Error: " + e.getMessage(), "File Error", JOptionPane.ERROR_MESSAGE);
+            //display error message if there is an error
+            outputArea.append("Error: " + e.getMessage() + "\n");
+            JOptionPane.showMessageDialog(null, "Error! Could not resume data.", "File Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -361,14 +378,16 @@ public class MainGUI {
                 // Get the list of competitors from the Excel file
                 List<Competitor> competitorsFromExcel = excelReader.readExcelData();
 
-                // Reset before adding new competitors
-                nameField.setText("");
-                resultField.setText("");
-                disciplineBox.setSelectedIndex(0);
-                outputArea.setText("");
-                competitorCount = 0;
-                competitors.clear();
-                tableModel.setRowCount(0);
+                // Reset before adding new competitors only if there is at least 1 competitor
+                if (competitorsFromExcel.size() > 0) {
+                    nameField.setText("");
+                    resultField.setText("");
+                    disciplineBox.setSelectedIndex(0);
+                    outputArea.setText("");
+                    competitorCount = 0;
+                    competitors.clear();
+                    tableModel.setRowCount(0);
+                }
 
                 // Add these competitors to the current list of competitors
                 competitors.addAll(competitorsFromExcel);
@@ -388,11 +407,14 @@ public class MainGUI {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     try {
-                        // Attempt to save the data to Excel
-                        Object[][] data = convertCompetitorsToData();
-                        excelPrinter.add(data, "Results");
-                        excelPrinter.write();
-                        outputArea.append("Results saved to Excel!\n");
+                        // Attempt to save the data to Excel when a competitors exists
+                        if (competitors.size() > 0) {
+                            Object[][] data = convertCompetitorsToData();
+                            excelPrinter.add(data, "Results");
+                            excelPrinter.write();
+                            JOptionPane.showMessageDialog(null, "Data saved to Excel!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                        }
+
                     } catch (IOException ex) {
                         outputArea.append("Error: " + ex.getMessage() + "\n");
                         JOptionPane.showMessageDialog(null, "Error saving to Excel!", "Error", JOptionPane.ERROR_MESSAGE);
