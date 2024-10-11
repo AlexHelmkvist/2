@@ -8,9 +8,10 @@ import java.awt.event.ActionListener;
 
 
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import common.Competitor;
@@ -35,7 +36,7 @@ public class MainGUI {
     // Instance variable for ExcelPrinter
     private ExcelPrinter excelPrinter;
     // Instance variable for ExcelReader
-    private ExcelReader excelReader;
+    private ExcelReader excelReader = new ExcelReader();
 
     public static void main(String[] args) {
         new MainGUI().createAndShowGUI();
@@ -85,7 +86,7 @@ public class MainGUI {
 
         // Button to read Excel file
         excelReadButton = new JButton("Read Excel File");
-        excelReadButton.addActionListener(new ReadExcelButtonListener());
+        excelReadButton.addActionListener(new readExcelButtonListener());
         panel.add(excelReadButton);
 
         // Button to print result to excel file
@@ -113,7 +114,7 @@ public class MainGUI {
         });
         panel.add(resumeDataButton);
 
-        //Tooltips for input fields and buttons
+        // Tooltips for input fields and buttons
         nameField.setToolTipText("Enter a valid name for the competitor, the name must start with a capital letter");
         resultField.setToolTipText("Enter a valid result in numbers for the selected discipline");
         excelPrintButton.setToolTipText("This button will save the results shown on the screen to an Excel file");
@@ -143,11 +144,21 @@ public class MainGUI {
             outputArea.append("Error: " + ex.getMessage() + "\n");
         }
 
-        excelReader = new ExcelReader();
         frame.add(panel);
         frame.setVisible(true);
-        //Resume at start
-        resumeData();
+        //Resume at start if savedData.dat exists
+        if (new File("savedData.dat").exists()) {
+            resumeData();
+        }
+
+
+        //Save data before closing
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                saveData();
+            }
+        });
     }
 
     private void saveData() {
@@ -168,15 +179,18 @@ public class MainGUI {
             //Display error message if there is an error
             JOptionPane.showMessageDialog(null, "Error: " + e.getMessage(), "File Error", JOptionPane.ERROR_MESSAGE);
         }
+        // If the data was saved successfully, display a message
+        JOptionPane.showMessageDialog(null, "Data saved!", "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void resumeData() {
         try (BufferedReader reader = new BufferedReader(new FileReader("savedData.dat"))) {
             String line;
             competitors.clear(); // Clear current competitors
+            outputArea.setText("");
             // Read data from file
             while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
+                String[] parts = line.split(","); // Split line into parts with delimiter ","
                 String name = parts[0];
                 int[] scores = new int[17];
                 for (int i = 1; i < parts.length; i++) {
@@ -188,8 +202,9 @@ public class MainGUI {
             }
             updateTable(); // Update the table with the new data
         } catch (IOException e) {
-            //Display error message if there is an error
-            JOptionPane.showMessageDialog(null, "Error: " + e.getMessage(), "File Error", JOptionPane.ERROR_MESSAGE);
+            //display error message if there is an error
+            outputArea.append("Error: " + e.getMessage() + "\n");
+            JOptionPane.showMessageDialog(null, "Error! Could not resume data.", "File Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -356,26 +371,34 @@ public class MainGUI {
         }
     }
     // ActionListener for the "Read Excel File" button
-    private class ReadExcelButtonListener implements ActionListener {
+    private class readExcelButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             try {
-                // attempt to read the data from the Excel file
-                excelReader = new ExcelReader();
-                String excelData = excelReader.getCellInfo(0, 0, 0, 1, 2, 3);
+                // Get the list of competitors from the Excel file
+                List<Competitor> competitorsFromExcel = excelReader.readExcelData();
 
-                //Read the data
-                if (excelData.equals("No file selected.")) {
-                    // Show an error if no file is selected
-                    JOptionPane.showMessageDialog(null, excelData, "File Error", JOptionPane.ERROR_MESSAGE);
-                } else {
-                    // If no error was found, reset the output area and display the data
+                // Reset before adding new competitors only if there is at least 1 competitor
+                if (competitorsFromExcel.size() > 0) {
+                    nameField.setText("");
+                    resultField.setText("");
+                    disciplineBox.setSelectedIndex(0);
                     outputArea.setText("");
-                    outputArea.append(excelData+"\n");
+                    competitorCount = 0;
+                    competitors.clear();
+                    tableModel.setRowCount(0);
                 }
+
+                // Add these competitors to the current list of competitors
+                competitors.addAll(competitorsFromExcel);
+
+                // Update the table with the new competitors
+                updateTable();
+
             } catch (IOException ex) {
+                // Display an error message
                 outputArea.append("Error: " + ex.getMessage() + "\n");
-                JOptionPane.showMessageDialog(null, "Error! Cannot read the selected file!", "File Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null, "Error reading Excel file!", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -384,13 +407,17 @@ public class MainGUI {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     try {
-                        // Attempt to save the data to Excel
-                        Object[][] data = convertCompetitorsToData();
-                        excelPrinter.add(data, "Results");
-                        excelPrinter.write();
-                        outputArea.append("Results saved to Excel!\n");
+                        // Attempt to save the data to Excel when a competitors exists
+                        if (competitors.size() > 0) {
+                            Object[][] data = convertCompetitorsToData();
+                            excelPrinter.add(data, "Results");
+                            excelPrinter.write();
+                            JOptionPane.showMessageDialog(null, "Data saved to Excel!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                        }
+
                     } catch (IOException ex) {
-                        outputArea.append("Error saving to Excel: " + ex.getMessage() + "\n");
+                        outputArea.append("Error: " + ex.getMessage() + "\n");
+                        JOptionPane.showMessageDialog(null, "Error saving to Excel!", "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 }
 
@@ -407,7 +434,7 @@ public class MainGUI {
                 }
             }
     private void updateTable() {
-        tableModel.setRowCount(0); // Töm tabellen innan den uppdateras
+        tableModel.setRowCount(0); // Empty the table before adding new competitors
         for (Competitor competitor : competitors) {
             tableModel.addRow(competitor.getRowData());
         }
